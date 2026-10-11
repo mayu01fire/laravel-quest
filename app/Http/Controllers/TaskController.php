@@ -14,9 +14,7 @@ class TaskController extends Controller
         Gate::authorize('viewAny', Task::class);
 
         $filter = $request->input('filter');
-
         $sort = $request->input('sort');
-
         $search = $request->input('search');
 
         if ($sort == 'asc') {
@@ -30,6 +28,14 @@ class TaskController extends Controller
         $query = $user->tasks()
             ->with('user');
 
+        if ($sort == 'priority') {
+            $query->orderBy('priority', 'desc')
+              ->orderBy('id', 'desc');
+        } else {
+            $query->orderBy('id', $direction);
+        }
+
+
         if ($filter == 'pending') {
             $query->where('completed', 0);
         }
@@ -37,8 +43,6 @@ class TaskController extends Controller
         if (!empty($search)) {
             $query->where('title', 'like', '%' . $search . '%');
         }
-
-        $query->orderBy('id', $direction);
 
         $tasks = $query->get();
         
