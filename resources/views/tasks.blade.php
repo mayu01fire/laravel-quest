@@ -11,6 +11,12 @@
     'search' => request('search')
 ]) }}">未完了だけ</a>
 
+<a href="{{ route('tasks.index', [
+    'filter' => request('filter'),
+    'sort' => 'priority',
+    'search' => request('search')
+]) }}">優先度順</a>
+
 <p>全タスク：{{ $totalCount }}件</p>
 <p>完了済み：{{ $completedCount }}件</p>
 <p>未完了：{{ $pendingCount }}件</p>

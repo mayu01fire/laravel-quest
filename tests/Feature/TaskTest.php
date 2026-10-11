@@ -536,4 +536,78 @@ class TaskTest extends TestCase
             'priority' => 2,
         ]);
     }
+
+    public function test_tasks_can_be_sorted_priority_desc(): void
+    {
+    $user = User::factory()->create();
+
+    Task::factory()
+        ->for($user)
+        ->create([
+            'title' => 'Laravelの勉強',
+            'priority' => 2,
+    ]);
+
+    Task::factory()
+        ->for($user)
+        ->create([
+            'title' => '掃除',
+            'priority' => 1,
+    ]);
+
+        Task::factory()
+        ->for($user)
+        ->create([
+            'title' => '買い物',
+            'priority' => 0,
+    ]);
+
+    $response = $this->actingAs($user)
+    ->get(route('tasks.index', [
+        'sort' => 'priority'
+    ]));
+
+    $response->assertSeeInOrder([
+        'Laravelの勉強',
+        '掃除',
+        '買い物',
+    ]);
+    }
+
+    public function test_tasks_with_same_priority_are_sorted_by_newest_first(): void
+    {
+    $user = User::factory()->create();
+
+    Task::factory()
+        ->for($user)
+        ->create([
+            'title' => 'PHPの勉強',
+            'priority' => 2,
+    ]);
+
+    Task::factory()
+        ->for($user)
+        ->create([
+            'title' => 'Laravelの勉強',
+            'priority' => 2,
+    ]);
+
+        Task::factory()
+        ->for($user)
+        ->create([
+            'title' => '掃除',
+            'priority' => 1,
+    ]);
+
+    $response = $this->actingAs($user)
+    ->get(route('tasks.index', [
+        'sort' => 'priority'
+    ]));
+
+    $response->assertSeeInOrder([
+        'Laravelの勉強',
+        'PHPの勉強',
+        '掃除',
+    ]);
+    }
 }
