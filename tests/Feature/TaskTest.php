@@ -541,23 +541,17 @@ class TaskTest extends TestCase
     {
     $user = User::factory()->create();
 
-    Task::factory()
-        ->for($user)
-        ->create([
+    Task::factory()->for($user)->create([
             'title' => 'Laravelの勉強',
             'priority' => 2,
     ]);
 
-    Task::factory()
-        ->for($user)
-        ->create([
+    Task::factory()->for($user)->create([
             'title' => '掃除',
             'priority' => 1,
     ]);
 
-        Task::factory()
-        ->for($user)
-        ->create([
+        Task::factory()->for($user)->create([
             'title' => '買い物',
             'priority' => 0,
     ]);
@@ -578,23 +572,17 @@ class TaskTest extends TestCase
     {
     $user = User::factory()->create();
 
-    Task::factory()
-        ->for($user)
-        ->create([
+    Task::factory()->for($user)->create([
             'title' => 'PHPの勉強',
             'priority' => 2,
     ]);
 
-    Task::factory()
-        ->for($user)
-        ->create([
+    Task::factory()->for($user)->create([
             'title' => 'Laravelの勉強',
             'priority' => 2,
     ]);
 
-        Task::factory()
-        ->for($user)
-        ->create([
+        Task::factory()->for($user)->create([
             'title' => '掃除',
             'priority' => 1,
     ]);
@@ -609,5 +597,81 @@ class TaskTest extends TestCase
         'PHPの勉強',
         '掃除',
     ]);
+    }
+
+    public function test_tasks_can_be_filtered_by_high_priority(): void
+    {
+    $user = User::factory()->create();
+
+    Task::factory()->for($user)->create([
+            'title' => 'Laravelの勉強',
+            'priority' => 2,
+    ]);
+
+    Task::factory()->for($user)->create([
+            'title' => 'PHPの勉強',
+            'priority' => 1,
+    ]);
+
+    Task::factory()->for($user)->create([
+            'title' => '掃除',
+            'priority' => 0,
+    ]);
+
+    $response = $this->actingAs($user)
+    ->get(route('tasks.index', [
+        'sort' => 'priority',
+        'priority' => 2
+    ]));
+
+    $response->assertSee('Laravelの勉強');
+
+    $response->assertDontSee('PHPの勉強');
+
+    $response->assertDontSee('掃除');
+    }
+
+    public function test_tasks_can_be_filtered_by_low_priority(): void
+    {
+    $user = User::factory()->create();
+
+    Task::factory()->for($user)->create([
+            'title' => 'Laravelの勉強',
+            'priority' => 2,
+    ]);
+
+    Task::factory()->for($user)->create([
+            'title' => 'PHPの勉強',
+            'priority' => 1,
+    ]);
+
+    Task::factory()->for($user)->create([
+            'title' => '掃除',
+            'priority' => 0,
+    ]);
+
+    $response = $this->actingAs($user)
+    ->get(route('tasks.index', [
+        'sort' => 'priority',
+        'priority' => 0
+    ]));
+
+    $response->assertDontSee('Laravelの勉強');
+
+    $response->assertDontSee('PHPの勉強');
+
+    $response->assertSee('掃除');
+    }
+
+    public function test_invalid_priority_is_rejected(): void
+    {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+    ->get(route('tasks.index', [
+        'priority' => 99,
+    ]));
+
+    $response->assertSessionHasErrors('priority');
     }
 }

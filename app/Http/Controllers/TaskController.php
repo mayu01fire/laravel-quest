@@ -13,9 +13,14 @@ class TaskController extends Controller
     {
         Gate::authorize('viewAny', Task::class);
 
+        $request->validate([
+            'priority' => ['nullable', 'in:0,1,2'],
+        ]);
+
         $filter = $request->input('filter');
         $sort = $request->input('sort');
         $search = $request->input('search');
+        $priority = $request->input('priority');
 
         if ($sort == 'asc') {
             $direction = 'asc';
@@ -42,6 +47,10 @@ class TaskController extends Controller
 
         if (!empty($search)) {
             $query->where('title', 'like', '%' . $search . '%');
+        }
+
+        if ($priority !== null && $priority !== '') {
+            $query->where('priority', $priority);
         }
 
         $tasks = $query->get();

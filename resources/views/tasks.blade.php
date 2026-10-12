@@ -14,8 +14,36 @@
 <a href="{{ route('tasks.index', [
     'filter' => request('filter'),
     'sort' => 'priority',
-    'search' => request('search')
+    'search' => request('search'),
+    'priority' => request('priority')
 ]) }}">優先度順</a>
+
+<a href="{{ route('tasks.index', [
+    'filter' => request('filter'),
+    'sort' => request('sort'),
+    'search' => request('search'),
+    'priority' => 2
+]) }}">高</a>
+
+<a href="{{ route('tasks.index', [
+    'filter' => request('filter'),
+    'sort' => request('sort'),
+    'search' => request('search'),
+    'priority' => 1
+]) }}">中</a>
+
+<a href="{{ route('tasks.index', [
+    'filter' => request('filter'),
+    'sort' => request('sort'),
+    'search' => request('search'),
+    'priority' => 0
+]) }}">低</a>
+
+<a href="{{ route('tasks.index', [
+    'filter' => request('filter'),
+    'sort' => request('sort'),
+    'search' => request('search'),
+]) }}">すべて</a>
 
 <p>全タスク：{{ $totalCount }}件</p>
 <p>完了済み：{{ $completedCount }}件</p>
@@ -26,13 +54,15 @@
 <a href="{{ route('tasks.index', [
     'filter' => request('filter'),
     'sort' => 'asc',
-    'search' => request('search')
+    'search' => request('search'),
+    'priority' => request('priority')
 ]) }}">古い順</a>
 
 <a href="{{ route('tasks.index', [
     'filter' => request('filter'),
     'sort' => 'desc',
-    'search' => request('search')
+    'search' => request('search'),
+    'priority' => request('priority')
 ]) }}">新しい順</a>
 
 @if (session('success'))
@@ -43,6 +73,7 @@
     <input type="text" name="search" value="{{ request('search') }}">
     <input type="hidden" name="sort" value="{{ request('sort') }}">
     <input type="hidden" name="filter" value="{{ request('filter') }}">
+    <input type="hidden" name="priority" value="{{ request('priority') }}">
 
     <button type="submit">検索</button>
 </form>
