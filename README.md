@@ -1,59 +1,127 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TaskFlow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravelで開発した、個人向けのタスク管理Webアプリケーションです。
 
-## About Laravel
+タスクの登録・編集・削除に加え、優先度や期限、カテゴリを設定してタスクを整理できます。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+検索・絞り込み・並び替え機能を備え、PC・スマートフォンの両方で利用しやすい画面を目指して開発しました。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 主な機能
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **ユーザー認証**：ログイン・ログアウト
+- **タスク管理**：登録・一覧表示・詳細表示・編集・削除
+- **完了状態の管理**：完了・未完了の切り替え
+- **優先度設定**：高・中・低の3段階
+- **期限管理**：期限の設定・変更・解除
+- **カテゴリ管理**：カテゴリの追加・名前変更・削除
+- **検索・絞り込み**：タスク名、カテゴリ、優先度、完了状態
+- **並び替え**：新しい順・古い順・優先度順
+- **進捗表示**：タスク総数、完了数、未完了数、完了率
+- **レスポンシブ対応**：PC・スマートフォンに対応
 
-## Learning Laravel
+## スクリーンショット
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### タスク一覧・進捗管理
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+![タスク一覧・進捗管理](public/images/task-list.png)
 
-## Laravel Sponsors
+### タスクカード・操作画面
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+![タスクカード・操作画面](public/images/task-cards.png)
 
-### Premium Partners
+### カテゴリ管理
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+![カテゴリ管理画面](public/images/category-management.png)
 
-## Contributing
+## 使用技術
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| 分類           | 技術                              |
+| -------------- | --------------------------------- |
+| バックエンド   | PHP 8.4.27 / Laravel 12.69.2      |
+| フロントエンド | Blade / Tailwind CSS / JavaScript |
+| データベース   | MySQL                             |
+| ORM            | Laravel Eloquent ORM              |
+| テスト         | Laravel Feature Test / PHPUnit    |
+| バージョン管理 | Git / GitHub                      |
 
-## Code of Conduct
+## セキュリティ対策
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Laravel Policyを利用したタスクのアクセス制御
+- 他ユーザーのタスクの閲覧・編集・削除・完了状態変更の禁止
+- 自分が所有するカテゴリのみ利用できるバリデーション
+- フォーム入力値のバリデーション
+- 認証が必要な画面・操作へのアクセス制限
 
-## Security Vulnerabilities
+## テスト
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+LaravelのFeatureテストを実装し、主要機能の動作を検証しています。
 
-## License
+**ローカル環境での実行結果（2026年10月22日）**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- 67 tests passed
+- 160 assertions
+
+主なテスト観点：
+
+- タスクの登録・編集・削除
+- 正常系・異常系・境界値
+- 他ユーザーのデータへのアクセス制御
+- カテゴリの所有者チェック
+- 検索・絞り込み・並び替え
+- 期限の登録・変更・解除
+- カテゴリ削除後のタスクデータ保持
+
+テスト実行コマンド：
+
+```bash
+php artisan test
+```
+
+## セットアップ
+
+以下は一般的なLaravelプロジェクトの起動手順です。実行環境に合わせて設定してください。
+
+```bash
+git clone https://github.com/m-omae/laravel-quest.git
+cd laravel-quest
+
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
+```
+
+`.env` にデータベース接続情報などを設定した後、以下を実行します。
+
+```bash
+php artisan migrate
+npm run build
+php artisan serve
+```
+
+ブラウザから `http://127.0.0.1:8000` にアクセスします。
+
+## 開発で工夫した点
+
+### 1. ユーザーごとのデータ分離
+
+ログインユーザーに紐づくタスクのみ取得する構成とし、Policyによる認可を組み合わせて、他ユーザーのデータを操作できないようにしました。
+
+### 2. データの整合性
+
+カテゴリ削除時には、紐づくタスク自体は削除せず、カテゴリとの関連付けのみ解除する仕様にしています。
+
+### 3. 自動テストによる品質確認
+
+正常系だけでなく、不正アクセスや入力エラー、境界値などを検証するFeatureテストを追加しました。
+
+### 4. レスポンシブデザイン
+
+タスク一覧、作成、編集、詳細、カテゴリ管理画面をPCとスマートフォンの双方で確認し、画面幅に合わせてレイアウトを調整しました。
+
+## 今後の改善予定
+
+- スクリーンショットの追加
+- UI・操作性の継続的な改善
+- テストケースの追加
