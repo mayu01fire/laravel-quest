@@ -86,7 +86,7 @@
 
     <a href="{{ route('tasks.index', [
         'filter' => request('filter'),
-        'sort' => 'priority',
+        'sort' => request('sort') === 'priority' ? null : 'priority',
         'search' => request('search'),
         'priority' => request('priority'),
         'category_id' => request('category_id'),
@@ -298,7 +298,34 @@
 
     <div class="space-y-4">
 @foreach ($tasks as $task)
-<div class="rounded-xl bg-white p-6 shadow-sm">
+
+@php
+    $deadlineDate = $task->deadline?->toDateString();
+    $today = today()->toDateString();
+    $tomorrow = today()->addDay()->toDateString();
+
+    $isOverdue = $task->completed == 0
+        && $deadlineDate !== null
+        && $deadlineDate < $today;
+
+    $isDueToday = $task->completed == 0
+        && $deadlineDate === $today;
+
+    $isDueTomorrow = $task->completed == 0
+        && $deadlineDate === $tomorrow;
+@endphp
+
+<div class="rounded-xl border-2 p-6 shadow-sm
+    @if ($isOverdue)
+        border-red-400 bg-red-50
+    @elseif ($isDueToday)
+        border-orange-500 bg-orange-100
+    @elseif ($isDueTomorrow)
+        border-yellow-500 bg-yellow-100
+    @else
+        border-transparent bg-white
+    @endif
+">
 
 <div class="flex flex-wrap items-start justify-between gap-4">
 
@@ -343,6 +370,20 @@
     <span>
         📅 {{ $task->deadline?->format('Y/m/d') ?? '期限なし' }}
     </span>
+
+    @if ($isOverdue)
+    <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+        ⚠ 期限切れ
+    </span>
+    @elseif ($isDueToday)
+    <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+        本日が期限
+    </span>
+    @elseif ($isDueTomorrow)
+    <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+        明日が期限
+    </span>
+    @endif
 
     @if ($task->completed == 1)
         <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">

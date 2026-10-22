@@ -1051,4 +1051,127 @@ class TaskTest extends TestCase
             'user_id' => $user->id,
         ]);
     }
+
+    public function test_overdue_incomplete_task_displays_warning(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'title' => '期限切れテスト',
+            'completed' => 0,
+            'deadline' => today()->subDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index'));
+
+        $response->assertOk();
+        $response->assertSee('期限切れテスト');
+        $response->assertSee('期限切れ');
+    }
+
+    public function test_incomplete_task_due_tomorrow_displays_warning(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'title' => '明日期限テスト',
+            'completed' => 0,
+            'deadline' => today()->addDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index'));
+
+        $response->assertOk();
+        $response->assertSee('明日期限テスト');
+        $response->assertSee('明日が期限');
+    }
+
+    public function test_completed_overdue_task_does_not_display_warning(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'title' => '完了済みタスクのテスト',
+            'completed' => 1,
+            'deadline' => today()->subDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index'));
+
+        $response->assertOk();
+        $response->assertSee('完了済みタスクのテスト');
+        $response->assertSee('完了済み');
+        $response->assertDontSee('期限切れ');
+    }
+
+    public function test_incomplete_task_due_today_displays_warning(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'title' => '本日期限テスト',
+            'completed' => 0,
+            'deadline' => today(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index'));
+
+        $response->assertOk();
+        $response->assertSee('本日期限テスト');
+        $response->assertSee('本日が期限');
+    }
+
+    public function test_task_without_deadline_does_not_display_warning(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'title' => '期限なしテスト',
+            'completed' => 0,
+            'deadline' => null,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index'));
+
+        $response->assertOk();
+        $response->assertSee('期限なしテスト');
+        $response->assertDontSee('期限切れ');
+        $response->assertDontSee('本日が期限');
+        $response->assertDontSee('明日が期限');
+    }
+
+    public function test_priority_sort_link_can_be_reset(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index', ['sort' => 'priority']));
+
+        $response->assertOk();
+        $response->assertSee('href="' . route('tasks.index') . '"', false);
+    }
+
+    public function test_priority_sort_reset_preserves_filter(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->get(route('tasks.index', [
+                'filter' => 'pending',
+                'sort' => 'priority',
+            ]));
+
+        $response->assertOk();
+        $response->assertSee('href="' . route('tasks.index', ['filter' => 'pending']) . '"', false);
+    }
 }
