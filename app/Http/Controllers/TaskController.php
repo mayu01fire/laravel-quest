@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
@@ -15,12 +16,19 @@ class TaskController extends Controller
 
         $request->validate([
             'priority' => ['nullable', 'in:0,1,2'],
+            'category_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('categories', 'id')
+                    ->where('user_id', auth()->id()),
+                ],
         ]);
 
         $filter = $request->input('filter');
         $sort = $request->input('sort');
         $search = $request->input('search');
         $priority = $request->input('priority');
+        $categoryId = $request->input('category_id');
 
         if ($sort == 'asc') {
             $direction = 'asc';
@@ -31,7 +39,7 @@ class TaskController extends Controller
         $user = auth()->user();
 
         $query = $user->tasks()
-            ->with('user');
+            ->with(['user', 'category']);
 
         if ($sort == 'priority') {
             $query->orderBy('priority', 'desc')
@@ -53,6 +61,10 @@ class TaskController extends Controller
             $query->where('priority', $priority);
         }
 
+        if ($categoryId !== null && $categoryId !== '') {
+            $query->where('category_id', $categoryId);
+        }
+
         $tasks = $query->get();
         
         $completedCount = $user->tasks()
@@ -71,12 +83,15 @@ class TaskController extends Controller
             $completionRate = 0;
         }
 
+        $categories = $user->categories;
+
         return view('tasks', [
             'tasks' => $tasks,
             'completedCount' => $completedCount,
             'pendingCount' => $pendingCount,
             'totalCount' => $totalCount,
-            'completionRate' => $completionRate
+            'completionRate' => $completionRate,
+            'categories' => $categories,
         ]);
     }
 
@@ -84,7 +99,9 @@ class TaskController extends Controller
     {
         Gate::authorize('create', Task::class);
 
-        return view('create');
+        $categories = auth()->user()->categories;
+
+        return view('create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -94,6 +111,14 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'priority' => ['required', 'integer', 'in:0,1,2'],
+            'category_id' => [
+            'nullable',
+            'integer',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    return $query->where('user_id', auth()->id());
+                }),
+            ],
+            'deadline' => ['nullable', 'date'],
         ]);
 
         $user = auth()->user();
@@ -101,6 +126,8 @@ class TaskController extends Controller
         $task = new Task();
         $task->title = $validated['title'];
         $task->priority = $validated['priority'];
+        $task->category_id = $validated['category_id'] ?? null;
+        $task->deadline = $validated['deadline'] ?? null;
 
         $user->tasks()->save($task);
 
@@ -113,7 +140,12 @@ class TaskController extends Controller
     {
         Gate::authorize('update', $task);
 
-        return view('edit', ['task' => $task]);
+        $categories = auth()->user()->categories;
+
+        return view('edit', [
+            'task' => $task,
+            'categories' => $categories,
+        ]);
     }
 
     public function update(Request $request, Task $task)
@@ -123,10 +155,20 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'priority' => ['required', 'integer', 'in:0,1,2'],
+            'category_id' => [
+            'nullable',
+            'integer',
+                Rule::exists('categories', 'id')
+                    ->where('user_id', auth()->id()),
+            ],
+            'deadline' => ['nullable', 'date'],
         ]);
-    
+
         $task->title = $validated['title'];
         $task->priority = $validated['priority'];
+        $task->category_id = $validated['category_id'] ?? null;
+        $task->deadline = $validated['deadline'] ?? null;
+
         $task->save();
 
         return redirect()

@@ -7,11 +7,12 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Category;
 
 class TaskTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     public function test_taskcreate(): void
     {
     $user = User::factory()->create();
@@ -50,7 +51,7 @@ class TaskTest extends TestCase
     $this->assertDatabaseMissing('tasks', [
         'title' => '',
     ]);
-    }    
+    }
 
     public function test_title_with_255_characters_can_be_created(): void
     {
@@ -70,7 +71,7 @@ class TaskTest extends TestCase
     $this->assertDatabaseHas('tasks', [
         'title' => $title,
     ]);
-    }    
+    }
 
     public function test_title_with_256_characters_cannot_be_created(): void
     {
@@ -215,7 +216,7 @@ class TaskTest extends TestCase
     $this->actingAs($user);
 
     $pageResponse = $this->get('/tasks?search=Laravel');
-    
+
     $pageResponse->assertSee('Laravelの勉強');
     $pageResponse->assertDontSee('買い物');
     }
@@ -673,5 +674,381 @@ class TaskTest extends TestCase
     ]));
 
     $response->assertSessionHasErrors('priority');
+    }
+
+    public function test_user_cannot_create_task_with_another_users_category(): void
+    {
+        $user1 = User::factory()->create();
+        $user3 = User::factory()->create();
+
+        $category = Category::create([
+            'name' => '仕事',
+            'user_id' => $user1->id,
+        ]);
+
+        $response = $this->actingAs($user3)
+            ->post(route('tasks.store'), [
+                'title' => '不正なカテゴリのテスト',
+                'priority' => 0,
+                'category_id' => $category->id,
+            ]);
+
+        $response->assertSessionHasErrors('category_id');
+
+        $this->assertDatabaseMissing('tasks', [
+            'title' => '不正なカテゴリのテスト',
+            'user_id' => $user3->id,
+        ]);
+    }
+
+    public function test_user_can_create_task_with_own_category(): void
+    {
+        $user = User::factory()->create();
+
+        $category = $user->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('tasks.store'), [
+                'title' => 'Laravelの勉強',
+                'priority' => 2,
+                'category_id' => $category->id,
+            ]);
+
+        $response->assertRedirect('/tasks');
+
+        $this->assertDatabaseHas('tasks', [
+            'title' => 'Laravelの勉強',
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+        ]);
+    }
+
+    public function test_user_cannot_update_task_with_another_users_category(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $categoryA = $userA->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $categoryB = $userB->categories()->create([
+            'name' => 'プライベート',
+        ]);
+
+        $task = Task::factory()->for($userB)->create([
+            'title' => '買い物',
+            'priority' => 1,
+            'category_id' => $categoryB->id,
+        ]);
+
+        $response = $this->actingAs($userB)
+            ->patch(route('tasks.update', $task), [
+                'title' => '買い物',
+                'priority' => 1,
+                'category_id' => $categoryA->id,
+            ]);
+
+        $response->assertSessionHasErrors('category_id');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'category_id' => $categoryB->id,
+        ]);
+    }
+
+    public function test_user_can_change_task_category(): void
+    {
+        $user = User::factory()->create();
+
+        $categoryA = $user->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $categoryB = $user->categories()->create([
+            'name' => 'プライベート',
+        ]);
+
+        $task = Task::factory()->for($user)->create([
+            'title' => '買い物',
+            'priority' => 1,
+            'category_id' => $categoryA->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patch(route('tasks.update', $task), [
+                'title' => '買い物',
+                'priority' => 1,
+                'category_id' => $categoryB->id,
+            ]);
+
+        $response->assertRedirect('/tasks');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'category_id' => $categoryB->id,
+        ]);
+    }
+
+    public function test_user_can_remove_task_category(): void
+    {
+        $user = User::factory()->create();
+
+        $category = $user->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $task = Task::factory()->for($user)->create([
+            'title' => 'Laravelの勉強',
+            'priority' => 1,
+            'category_id' => $category->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patch(route('tasks.update', $task), [
+                'title' => 'Laravelの勉強',
+                'priority' => 1,
+                'category_id' => '',
+            ]);
+
+        $response->assertRedirect('/tasks');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'category_id' => null,
+        ]);
+    }
+
+    public function test_user_can_filter_tasks_by_category(): void
+    {
+        $user = User::factory()->create();
+
+        $work = $user->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $private = $user->categories()->create([
+            'name' => 'プライベート',
+        ]);
+
+        Task::factory()->for($user)->create([
+            'title' => 'Laravelの勉強',
+            'category_id' => $work->id,
+        ]);
+
+        Task::factory()->for($user)->create([
+            'title' => '買い物',
+            'category_id' => $private->id,
+        ]);
+
+        Task::factory()->for($user)->create([
+            'title' => '資料作成',
+            'category_id' => $work->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('tasks.index', [
+            'category_id' => $work->id,
+        ]));
+
+        $response->assertSee('Laravelの勉強');
+        $response->assertSee('資料作成');
+        $response->assertDontSee('買い物');
+    }
+
+    public function test_user_cannot_filter_by_another_users_category(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $categoryA = $userA->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $categoryB = $userB->categories()->create([
+            'name' => 'プライベート',
+        ]);
+
+        $response = $this->actingAs($userB)->get(route('tasks.index', [
+            'category_id' => $categoryA->id,
+        ]));
+
+        $response->assertSessionHasErrors('category_id');
+    }
+
+    public function test_user_can_update_own_category_name(): void
+    {
+        $user = User::factory()->create();
+
+        $category = $user->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('categories.update', $category), [
+            'name' => '業務',
+        ]);
+
+        $response->assertRedirect(route('categories.index'));
+
+        $this->assertDatabaseHas('categories', [
+            'id' => $category->id,
+            'name' => '業務',
+        ]);
+    }
+
+    public function test_user_cannot_update_another_users_category(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $categoryA = $userA->categories()->create([
+            'name' => '仕事',
+        ]);
+
+        $response = $this->actingAs($userB)->patch(route('categories.update', $categoryA), [
+            'name' => '業務',
+        ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('categories', [
+            'id' => $categoryA->id,
+            'name' => '仕事',
+        ]);
+    }
+
+    public function test_user_can_delete_own_category_without_deleting_tasks(): void
+    {
+        $user = User::factory()->create();
+
+        $category = $user->categories()->create([
+            'name' => '削除テスト',
+        ]);
+
+        $task = new Task();
+        $task->title = '削除確認タスク';
+        $task->priority = 1;
+        $task->category_id = $category->id;
+
+        $user->tasks()->save($task);
+
+        $response = $this->actingAs($user)->delete(route('categories.destroy', $category));
+
+        $response->assertRedirect(route('categories.index'));
+
+        $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'category_id' => null,
+        ]);
+    }
+
+    public function test_user_cannot_delete_another_users_category(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        $categoryA = $userA->categories()->create([
+            'name' => '仕事',
+       ]);
+
+        $response = $this->actingAs($userB)->delete(route('categories.destroy', $categoryA));
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('categories', ['id' => $categoryA->id]);
+    }
+
+    public function test_user_can_create_task_with_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->post(route('tasks.store'), [
+                'title' => '期限付きタスク',
+                'priority' => 1,
+                'deadline' => '2026-10-20',
+            ]);
+
+        $response->assertRedirect(route('tasks.index'));
+
+        $this->assertDatabaseHas('tasks', [
+            'title' => '期限付きタスク',
+            'user_id' => $user->id,
+            'deadline' => '2026-10-20 00:00:00',
+        ]);
+
+    }
+
+    public function test_user_can_update_task_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $task = new Task();
+        $task->title = '期限変更テスト';
+        $task->priority = 1;
+        $task->deadline = '2026-10-20';
+
+        $user->tasks()->save($task);
+
+        $response = $this->actingAs($user)
+            ->patch(route('tasks.update', $task), [
+                'title' => '期限変更テスト',
+                'priority' => 1,
+                'deadline' => '2026-10-25',
+            ]);
+
+        $response->assertRedirect(route('tasks.index'));
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'deadline' => '2026-10-25 00:00:00',
+        ]);
+    }
+
+    public function test_user_can_remove_task_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $task = new Task();
+        $task->title = '期限解除テスト';
+        $task->priority = 1;
+        $task->deadline = '2026-10-20';
+
+        $user->tasks()->save($task);
+
+        $response = $this->actingAs($user)
+            ->patch(route('tasks.update', $task), [
+                'title' => '期限解除テスト',
+                'priority' => 1,
+                'deadline' => '',
+            ]);
+
+        $response->assertRedirect(route('tasks.index'));
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'deadline' => null,
+        ]);
+    }
+
+    public function test_user_cannot_create_task_with_invalid_deadline(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->post(route('tasks.store'), [
+                'title' => '不正な期限テスト',
+                'priority' => 1,
+                'deadline' => 'abc',
+            ]);
+
+        $response->assertSessionHasErrors('deadline');
+
+        $this->assertDatabaseMissing('tasks', [
+            'title' => '不正な期限テスト',
+            'user_id' => $user->id,
+        ]);
     }
 }
