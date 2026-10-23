@@ -8,7 +8,8 @@ Laravelで開発した、個人向けのタスク管理Webアプリケーショ�
 
 ## 主な機能
 
-- **ユーザー認証**：ログイン・ログアウト
+- **ユーザー認証**：ユーザー登録・ログイン・ログアウト
+- **プロフィール管理**：名前・メールアドレス変更、パスワード変更、アカウント削除
 - **タスク管理**：登録・一覧表示・詳細表示・編集・削除
 - **完了状態の管理**：完了・未完了の切り替え
 - **優先度設定**：高・中・低の3段階
@@ -56,10 +57,10 @@ Laravelで開発した、個人向けのタスク管理Webアプリケーショ�
 
 LaravelのFeatureテストを実装し、主要機能の動作を検証しています。
 
-**ローカル環境での実行結果（2026年10月22日）**
+**ローカル環境での実行結果（2026年10月23日）**
 
-- 67 tests passed
-- 160 assertions
+- 74 tests passed
+- 182 assertions
 
 主なテスト観点：
 
@@ -79,28 +80,92 @@ php artisan test
 
 ## セットアップ
 
-以下は一般的なLaravelプロジェクトの起動手順です。実行環境に合わせて設定してください。
+### 必要な環境
+
+- PHP 8.2以上（開発環境：PHP 8.4.27）
+- Composer
+- Node.js / npm
+- MySQL
+- Git
+
+### 1. リポジトリの取得
 
 ```bash
 git clone https://github.com/m-omae/laravel-quest.git
 cd laravel-quest
+```
 
+### 2. 依存パッケージのインストール
+
+```bash
 composer install
 npm install
+```
 
+### 3. 環境設定
+
+`.env.example` をコピーして `.env` を作成します。
+
+Windows（PowerShell）：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+macOS / Linux：
+
+```bash
 cp .env.example .env
+```
+
+アプリケーションキーを生成します。
+
+```bash
 php artisan key:generate
 ```
 
-`.env` にデータベース接続情報などを設定した後、以下を実行します。
+### 4. データベースの準備
+
+MySQLで空のデータベースを作成し、`.env` に接続情報を設定します。
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=taskflow
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+※ 上記は設定例です。実際のMySQL環境に合わせて変更してください。
+
+テーブルを作成します。
 
 ```bash
 php artisan migrate
+```
+
+### 5. フロントエンドのビルド
+
+```bash
 npm run build
+```
+
+### 6. アプリケーションの起動
+
+```bash
 php artisan serve
 ```
 
-ブラウザから `http://127.0.0.1:8000` にアクセスします。
+ブラウザで `http://127.0.0.1:8000` にアクセスしてください。
+
+### 7. テストの実行
+
+```bash
+php artisan test
+```
+
+※ テスト実行前に、テスト用データベースの設定を確認してください。既存の開発・本番データベースをテストに使用しないでください。
 
 ## 開発で工夫した点
 
