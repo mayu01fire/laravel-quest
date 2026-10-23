@@ -1,29 +1,42 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
+<x-app-layout>
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+        {{-- ページタイトル --}}
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">
+                プロフィール設定
+            </h1>
+
+            <p class="mt-2 text-sm text-gray-500">
+                アカウント情報やセキュリティ設定を管理できます。
+            </p>
+        </div>
+
+        {{-- 設定フォーム --}}
+        <div class="space-y-6">
+
+            {{-- プロフィール情報 --}}
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+                <div class="max-w-2xl">
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
+            {{-- パスワード変更 --}}
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+                <div class="max-w-2xl">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
+            {{-- アカウント削除 --}}
+            <div class="rounded-xl border border-red-200 bg-white p-6 shadow-sm sm:p-8">
+                <div class="max-w-2xl">
                     @include('profile.partials.delete-user-form')
                 </div>
             </div>
+
         </div>
     </div>
 </x-app-layout>
